@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Dapper;
 using System.Linq;
 using backend.Models;
+using backend.Interfaces;
 
 namespace dotnet_practice.Controller
 {
@@ -10,13 +11,18 @@ namespace dotnet_practice.Controller
     [Route("api/[controller]")]
     public class CustomerController : ControllerBase
     {
+
+        private readonly ICustomerService customerService;
+
+        public CustomerController(ICustomerService _custService){
+            customerService = _custService;
+        }
+
         [HttpGet]
         [Route("list")]
-        public IEnumerable<Customer> Get()
+        public IEnumerable<Customer> Get()  
         {
-            using var connection = DbCnx.GetConnection();
-            var customers = connection.Query<Customer>("SELECT * FROM customer order by id desc");
-            return customers;
+            return customerService.GetAllCustomers();
         }
 
         [HttpGet]
@@ -36,24 +42,20 @@ namespace dotnet_practice.Controller
             {
                 return BadRequest("Customer data is required.");
             }
-
-            using var connection = DbCnx.GetConnection();
-            var sql = "INSERT INTO customer (name, phone, email, city) VALUES (@Name, @Phone, @Email, @City)";
-            var result = connection.Execute(sql, new
-            {
+        try
+        {
+            var AddedCust = customerService.AddCustomer(customer);
+                  {
+                   return Ok("Customer successfully added");
+                  }
+                 return StatusCode(500, "Failed to add the Customer.");
+        }
+        catch (Exception ex)
+        {
+            
+           return StatusCode(500, ex.Message);
+        }
                 
-                Name = customer.Name,
-                Phone = customer.Phone,
-                Email = customer.Email,
-                City = customer.City
-            });
-
-            if (result > 0)
-            {
-                return Ok("Customer added successfully.");
-            }
-
-            return StatusCode(500, "Failed to add customer.");
         }
 
         [HttpPut]
@@ -65,42 +67,41 @@ namespace dotnet_practice.Controller
                 return BadRequest("Customer data is required.");
             }
 
-            using var connection = DbCnx.GetConnection();
-            var sql = "UPDATE customer SET name = @Name, phone = @Phone, email = @Email, city = @City WHERE id = @Id";
-            var result = connection.Execute(sql, new
-            {
-                Id = id,
-                Name = customer.Name,
-                Phone = customer.Phone,
-                Email = customer.Email,
-                City = customer.City
-            });
-
-            if (result > 0)
-            {
-                return Ok("Customer successfully updated.");
-            }
-
-            return NotFound("Customer not found.");
+           
+         try
+           {
+            var UpdateCust = customerService.UpdateCustomer(customer);
+                  {
+                   return Ok("Customer Updated  Succesfully ");
+                  }
+                 return StatusCode(500, "Failed to add the Customer.");
+        }
+        catch (Exception ex)
+        {
+            
+           return StatusCode(500, ex.Message);
+        }
         }
 
         [HttpDelete]
         [Route("delete/{id}")]
         public IActionResult DeleteCustomer(int id)
         {
-            using var connection = DbCnx.GetConnection();
-            var deleteSalesSql = "DELETE FROM sales WHERE customer_id = @Id";
-            connection.Execute(deleteSalesSql, new { Id = id });
-
-            var sql = "DELETE FROM customer WHERE id = @Id";
-            var result = connection.Execute(sql, new { Id = id });
-
-            if (result > 0)
-            {
-                return Ok("Customer deleted successfully.");
-            }
-
-            return NotFound("Customer not found.");
+           try
+        {
+         var isDeleted = customerService.DeleteCustomer(id) ;
+         if(isDeleted)
+        {
+        return Ok("product Successfully deleted");
+        }       
+        else{
+        return NotFound("Product Not Found");
+         }
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, "Something went wrong!");
+        }
         }
     }
 }

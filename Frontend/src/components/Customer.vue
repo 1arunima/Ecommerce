@@ -13,7 +13,11 @@
     city :""
   })
 
-
+const rules = {
+   required: [(value)=>!!value || "This field is required"],
+  
+   
+  }
   const headers=[
   { title: 'Name', key: 'name' },
   { title: 'Phone', key: 'phone' },
@@ -85,6 +89,7 @@ onMounted(()=>{
 
 
 <template>
+  <!-- <h1> Customer Table</h1> -->
   <DataTable
     :headers="headers"
     :items="itemsArray"
@@ -98,16 +103,24 @@ onMounted(()=>{
       <v-container>
         <v-row>
           <v-col cols="12" md="6">
-            <v-text-field v-model="customer.name" label="Name" />
+            <v-text-field v-model="customer.name" label="Name" 
+             :rules="rules.required"
+            />
           </v-col>
           <v-col cols="12" md="6">
-            <v-text-field v-model="customer.phone" label="Phone" type="number" />
+            <v-text-field v-model="customer.phone" label="Phone" type="number"
+            :rules="rules.required"
+             />
           </v-col>
           <v-col cols="12" md="6">
-            <v-text-field v-model="customer.email" label="Email" />
+            <v-text-field v-model="customer.email" label="Email" 
+            :rules="rules.required"
+            />
           </v-col>
           <v-col cols="12" md="6">
-            <v-text-field v-model="customer.city" label="City" />
+            <v-text-field v-model="customer.city" label="City" 
+            :rules="rules.required"
+            />
           </v-col>
         </v-row>
       </v-container>

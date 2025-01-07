@@ -13,14 +13,19 @@ const product = ref({
   quantity: 0,
 });
 
+
+const rules ={
+  required:(value)=>!!value || "This field is required",
+  positiveNumber:(value)=>(value>0 && !isNaN(value))|| "Must be a Positive number",
+  maxlength:(length)=> (value)=>(value.length<=length)||  `Must be ${length} characters or less`,
+}
 const headers = [
-  { title: 'Id', key: 'id' },
-  { title: 'Name', key: 'name' },
-  { title: 'Category', key: 'category' },
-  { title: 'Description', key: 'description' },
-  { title: 'Price', key: 'price' },
-  {  title: ' Stock Quantity', key: 'stock_quantity' },
-  {  title: 'Actions', key: 'actions' },
+  { title: 'Name', key: 'name', },
+  { title: 'Category', key: 'category', },
+  { title: 'Description', key: 'description',  },
+  { title: 'Price', key: 'price' ,},
+  {  title: ' Stock Quantity', key: 'stock_quantity' ,},
+  {  title: 'Actions', key: 'actions' , },
 
 ];
 
@@ -58,8 +63,8 @@ const handleDelete = async (item, index) => {
     console.error('Error deleting product:', error);
   }
 };
-
 const handleSave = async () => {
+
   try {
     if (editedIndex.value === -1) {
       await axios.post('/api/Product/add', product.value);
@@ -72,8 +77,7 @@ const handleSave = async () => {
   } catch (error) {
     console.error('Error saving product:', error);
   }
-};
-
+}
 const handleCancel = () => {
   resetForm();
 };
@@ -104,24 +108,38 @@ onMounted(() => {
     @delete="handleDelete"
     @save="handleSave"
     @cancel="handleCancel"
+    
+
   >
     <template #dialog-content>
       <v-container>
         <v-row>
           <v-col cols="12" md="6">
-            <v-text-field v-model="product.name" label="Product Name" />
+            <v-text-field v-model="product.name" label="Product Name" 
+            :rules="[rules.required, rules.maxlength(50)]"
+            />
           </v-col>
           <v-col cols="12" md="6">
-            <v-text-field v-model="product.category" label="Category" />
+            <v-text-field v-model="product.category" label="Category"
+            :rules="[rules.required, rules.maxlength(30)]"
+             />
           </v-col>
           <v-col cols="12" md="6">
-            <v-text-field v-model="product.description" label="Description" />
+            <v-text-field v-model="product.description" label="Description" 
+            :rules="[rules.required, rules.maxlength(100)]"
+            />
           </v-col>
           <v-col cols="12" md="6">
-            <v-text-field v-model="product.price" label="Price" type="number" />
+            <v-text-field v-model="product.price" label="Price" type="number" 
+             :rules="[rules.required, rules.positiveNumber]"
+            />
           </v-col>
           <v-col cols="12" md="6">
-            <v-text-field v-model="product.stock_quantity" label=" Stock Quantity" type="number" />
+            <v-text-field v-model="product.stock_quantity" label=" Stock Quantity" type="number" 
+            :rules="[rules.required, rules.positiveNumber]"
+
+            
+            />
           </v-col>
         </v-row>
       </v-container>

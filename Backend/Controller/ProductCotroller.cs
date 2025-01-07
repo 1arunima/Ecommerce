@@ -7,6 +7,8 @@ using Dapper;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.VisualBasic;
 using System.ComponentModel.Design;
+using backend.Models;
+using backend.Interfaces;
 
 namespace dotnet_practice.Controller
 {
@@ -15,88 +17,91 @@ namespace dotnet_practice.Controller
     public class ProductController : ControllerBase
     {
         // private readonly string _connectionString = "Host=192.168.1.10;Port=5432;Database=test;User Id=postgres;Password=PostgresDB@dm1n;"; 
+        private readonly IProductService productService;
+
+        public ProductController(IProductService _prdtService)
+        {
+            productService = _prdtService;
+
+        }
+
         [HttpGet]
          [Route("list")]
        public IEnumerable<Product> Get()
         {
-            using var connection = DbCnx.GetConnection();
-
-            var products = connection.Query<Product>("select * from product p");
-
-            return products;
+            return productService.GetList();
         }
 
+        [HttpGet]
+        [Route("getProductList")]
+       public IEnumerable<AutocompleteModel> GetProductList()
+   {
+    var autocompleteModels = productService.GetAutocompleteModels();
 
-        
+    if (autocompleteModels != autocompleteModels)
+      {
+        return autocompleteModels; 
+       }
+        else
+       {
+        throw new Exception("Products not found.");     
+       }
+   }
         [HttpGet]
         [Route("get/id")]
-
-        public IActionResult GetById(int id){
-            using var connection =DbCnx.GetConnection();
-            var sql ="SELECT * from product where id =@Id";
-            var product = connection.QueryFirstOrDefault<Product>(sql, new {Id= id});
-
-            if(product!= null){
-                return Ok(product);
-            }
-            return NotFound("Product not Found ");
+       public IEnumerable<Product> GetById(int id)
+        {
+             var product = productService.GetById(id);
+         return product != null ? new List<Product> { product } : Enumerable.Empty<Product>();
         }
-
         [HttpPost]
         [Route("add")]
-        public IActionResult AddProduct([FromBody] Product product){
-        
-            if(product==null){
-                return BadRequest("product data is required");
+        public IActionResult AddProduct ([FromBody] Product product){
+            if(product == null){
+                return BadRequest("Product data is required");
             }
 
-            using var connection =DbCnx.GetConnection();
-            var sql = "INSERT INTO product ( name, category, description, price, stock_quantity) " +
-              "VALUES ( @Name, @category, @description, @price, @stock_quantity)";
-
-             var result = connection.Execute(sql, new {
-                        Name= product.Name,
-                        category = product.category,
-                        description = product.description,
-                       price = product.price,
-                       stock_quantity = product.stock_quantity
-             });
-                
-             if(result>0){
-                    
-                return Ok("Product successfully added");
+            try
+            {
+               var isAdded= productService.AddProduct(product);
+                {
+            return Ok("Product successfully added");
              }
-             return StatusCode(500, "Failed to add the product.");
+
+                return StatusCode(500, "Failed to add the product.");
+            }
+            catch (Exception ex)
+            {
+                
+           return StatusCode(500, ex.Message);  
+
+              }
         }
 
 
         [HttpPut]
         [Route("edit/{id}")]
 
-      public IActionResult EditProduct (int id,[FromBody] Product product ){
+      public IActionResult UpdateProduct (int id,[FromBody] Product product ){
         if(product ==null){
             return BadRequest("product data is required");
         }
 
-        using var connection =DbCnx.GetConnection();
-        var sql = @"UPDATE product SET name=@Name, category=@Category,description=@Description, price=@price,stock_quantity=@Quantity  where id=@Id";
+        try
+        {
+            var isUpdated= productService.UpdateProduct(product);
 
-         var result = connection.Execute(sql,new {
-                Id =id,
-                Name=product.Name,
-                Category= product.category,
-                Description=product.description,
-                Price=product.price,
-                Quantity=product.stock_quantity,
-               
-         });
-
-         if(result>0){
-             
-            return Ok ("Product sccessfully updated.");
-         }
-         return NotFound("product not found");
-         
+            if (isUpdated)
+            {
+                 return Ok("Product successfully updated.");
+            }else{
+                return NotFound("Product not found.");
+            }
+        }
+           catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message);
+        }
       }
 
 
@@ -105,17 +110,23 @@ namespace dotnet_practice.Controller
       [HttpDelete]
       [Route("delete/{id}")]
 
-      public IActionResult deleteProduct(int id ){
-         using var connection=DbCnx.GetConnection();
-         var sql ="DELETE from product where id =@Id";
-
-         var result = connection.Execute(sql, new {Id=id});
-
-         if(result>0){
-            return Ok(" Product successfully deleted");
-
+      public IActionResult DeleteProduct(int id ){
+        try
+        {
+         var isDeleted = productService.DeleteProduct(id) ;
+         if(isDeleted)
+        {
+        return Ok("product Successfully deleted");
+        }       
+        else{
+        return NotFound("Product Not Found");
          }
-         return NotFound(" Product Not found ");
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, "Something went wrong!");
+        }
+       
       }
 
       

@@ -2,6 +2,9 @@ using FluentMigrator.Runner;
 using Microsoft.Extensions.DependencyInjection;
 using dotnet_practice.Migrations;
 using FluentMigrator.Runner.Conventions;
+using backend.Interfaces;
+using backend.Services;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,7 +34,13 @@ builder.Services
             .WithGlobalConnectionString("Host=192.168.1.10;Port=5432;Database=test;User Id=postgres;Password=PostgresDB@dm1n;SearchPath=arunima;")
             .ScanIn(typeof(CreateCustomerProductSakesTable ).Assembly).For.Migrations())
             .AddLogging(logging=>logging.AddFluentMigratorConsole());
- 
+
+builder.Services.AddTransient<IProductService, ProductService>();
+builder.Services.AddTransient<ICustomerService, CustomerService>();
+builder.Services.AddTransient<ISalesService, SalesService>();
+
+
+
 var app = builder.Build();
 
 app.UseCors("AllowAll");
